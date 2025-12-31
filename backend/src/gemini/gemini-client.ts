@@ -1,4 +1,5 @@
 import { GoogleGenAI, Content } from '@google/genai';
+import { executeForensicTool } from '../services/reasoning-service.js';
 
 // Initialize Gemini client
 const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY! });
@@ -18,12 +19,49 @@ export const THINKING_LEVELS = {
   HIGH: 'high',
 } as const;
 
+export const VERIDICUS_CORE_PROMPT = `
+You are Veridicus, a forensic reasoning agent. Your mission is to analyze evidence corpora and identify deep logical inconsistencies, factual contradictions, and timeline anomalies.
+
+OPERATING GUIDELINES:
+1. DEDUCTIVE PRECISION: Always cite specific evidence IDs, page numbers, or timestamps.
+2. CONTRADICTION FLAGGING: Explicitly look for statements in one exhibit that conflict with another.
+3. THOUGHT TRACE: Expose your internal reasoning to weigh conflicting evidence.
+4. STRUCTURED FINDINGS: When analyzing a case, look for specific contradictions and return them clearly.
+`;
+
+export const FORENSIC_TOOLS = [
+  {
+    name: "search_evidence",
+    description: "Search for specific keywords or phrases across the case evidence corpus.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "The keyword or phrase to search for." },
+        fileType: { type: "string", description: "Optional filter by file type (e.g., 'pdf', 'audio')." }
+      },
+      required: ["query"]
+    }
+  },
+  {
+    name: "get_evidence_metadata",
+    description: "Retrieve technical metadata and automated findings for a specific exhibit.",
+    parameters: {
+      type: "object",
+      properties: {
+        evidenceId: { type: "string", description: "The UUID of the evidence exhibit." }
+      },
+      required: ["evidenceId"]
+    }
+  }
+];
+
 export interface GeminiConfig {
   model?: keyof typeof MODELS;
   thinkingLevel?: typeof THINKING_LEVELS[keyof typeof THINKING_LEVELS];
   temperature?: number;
   maxOutputTokens?: number;
   systemInstruction?: string;
+  caseId?: string;
 }
 
 /**
@@ -37,8 +75,9 @@ export async function generateWithThinking(
   text: string;
   thoughts: string[];
   usage: { inputTokens: number; outputTokens: number };
+  contradictions: any[];
 }> {
-  const model = genAI.models.get(MODELS[config.model || 'PRO']);
+  const model = await (genAI.models as any).get(MODELS[config.model || 'PRO']);
   
   const response = await model.generateContent({
     contents: [
@@ -46,7 +85,9 @@ export async function generateWithThinking(
       { role: 'user', parts: [{ text: prompt }] },
     ],
     config: {
-      thinkingLevel: config.thinkingLevel || THINKING_LEVELS.HIGH,
+      thinkingConfig: {
+        includeThoughts: true
+      },
       temperature: config.temperature ?? 0.7,
       maxOutputTokens: config.maxOutputTokens ?? 65536,
       systemInstruction: config.systemInstruction,
@@ -74,6 +115,7 @@ export async function generateWithThinking(
       inputTokens: response.usageMetadata?.promptTokenCount || 0,
       outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
     },
+    contradictions: [], // Thinking mode doesn't specifically target contradictions yet in this handler
   };
 }
 
@@ -112,37 +154,90 @@ export async function generateWithCache(
   text: string;
   thoughts: string[];
   citations: Array<{ page?: number; timestamp?: string; source: string }>;
+  contradictions: any[];
 }> {
-  const cache = await genAI.caches.get(cacheId);
-  const model = genAI.models.get(MODELS.PRO);
-
-  const response = await model.generateContent({
+  const cache = await (genAI.caches as any).get(cacheId);
+  const model = await (genAI.models as any).get(MODELS.PRO);
+  
+  let response = await model.generateContent({
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: {
       cachedContent: cache.name,
-      thinkingLevel: config.thinkingLevel || THINKING_LEVELS.HIGH,
-      temperature: config.temperature ?? 0.3, // Lower for forensic accuracy
+      tools: [{ functionDeclarations: FORENSIC_TOOLS }],
+      toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
+      thinkingConfig: {
+        includeThoughts: true
+      },
+      temperature: config.temperature ?? 0.3,
     },
   });
 
-  // Parse response for thoughts and citations
+  const chatContents: Content[] = [{ role: 'user', parts: [{ text: prompt }] }];
+  let turnResponse = response;
+  
+  // Multi-turn tool execution loop (up to 5 turns)
+  for (let turn = 0; turn < 5; turn++) {
+    const candidate = turnResponse.candidates?.[0];
+    const functionCalls = candidate?.content?.parts?.filter((p: any) => 'functionCall' in p);
+
+    if (!functionCalls || functionCalls.length === 0) break;
+
+    chatContents.push(candidate!.content!);
+
+    const toolResults = await Promise.all(functionCalls.map(async (fc: any) => {
+      const result = await executeForensicTool(fc.functionCall.name, fc.functionCall.args, (config as any).caseId);
+      return {
+        role: 'function',
+        parts: [{
+          functionResponse: {
+            name: fc.functionCall.name,
+            response: result
+          }
+        }]
+      };
+    }));
+
+    chatContents.push(...(toolResults as any));
+
+    turnResponse = await model.generateContent({
+      contents: chatContents,
+      config: {
+        cachedContent: cache.name,
+        tools: [{ functionDeclarations: FORENSIC_TOOLS }],
+        thinkingConfig: { includeThoughts: true }
+      },
+    });
+  }
+
+  // Final parsing from the last turn
   const thoughts: string[] = [];
   let text = '';
   const citations: Array<{ page?: number; timestamp?: string; source: string }> = [];
 
-  for (const candidate of response.candidates || []) {
+  for (const candidate of turnResponse.candidates || []) {
     for (const part of candidate.content?.parts || []) {
       if ('thought' in part && part.thought) {
         thoughts.push(part.text || '');
-      } else {
+      } else if ('text' in part) {
         text += part.text || '';
       }
     }
   }
 
-  // TODO: Parse structured citations from response
+  // Attempt to parse structured JSON from the text
+  let contradictions: any[] = [];
+  try {
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[1]);
+      if (parsed.contradictions) contradictions = parsed.contradictions;
+      if (parsed.summary && !text.includes(parsed.summary)) {
+        text = parsed.summary + "\n\n" + text;
+      }
+    }
+  } catch (e) {}
 
-  return { text, thoughts, citations };
+  return { text, thoughts, citations, contradictions };
 }
 
 export { genAI };

@@ -46,13 +46,13 @@ fastify.get('/health', async () => {
   };
 });
 
-// API routes will be registered here
-// await fastify.register(import('./api/cases.js'), { prefix: '/api/cases' });
-// await fastify.register(import('./api/evidence.js'), { prefix: '/api/evidence' });
-// await fastify.register(import('./api/analysis.js'), { prefix: '/api/analysis' });
+// API routes
+await fastify.register(import('./api/cases.js'), { prefix: '/api/cases' });
+await fastify.register(import('./api/evidence.js'), { prefix: '/api/evidence' });
+await fastify.register(import('./api/analysis.js'), { prefix: '/api/analysis' });
 
 // WebSocket routes for Live API
-// await fastify.register(import('./websocket/live-audio.js'));
+await fastify.register(import('./websocket/live-audio.js'));
 
 // Start server
 const start = async () => {

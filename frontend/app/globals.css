@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: #eee8df; /* Cream */
+  --foreground: #2c365a; /* Deep Ocean */
+  --beige: #c4bcb0;
+  --ocean: #2c365a;
+  --cream: #eee8df;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-beige: var(--beige);
+  --color-ocean: var(--ocean);
+  --color-cream: var(--cream);
+
+  --font-sans: "Inter", var(--font-geist-sans);
+  --font-serif: "Playfair Display", serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.artifact-card {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--beige);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.artifact-card:hover {
+  border-color: var(--ocean);
+  box-shadow: 0 4px 20px rgba(44, 54, 90, 0.1);
+}

@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@shared/types/database.js';
+import type { Database } from '../types/database.js';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL!;
@@ -42,7 +42,7 @@ export interface Case {
 export async function createCase(userId: string, name: string, description?: string): Promise<Case> {
   const { data, error } = await supabase
     .from('cases')
-    .insert({ name, description, user_id: userId })
+    .insert({ name, description, user_id: userId } as any)
     .select()
     .single();
 
@@ -66,8 +66,8 @@ export async function updateCaseCache(
   cacheId: string,
   expiresAt: Date
 ): Promise<void> {
-  const { error } = await supabase
-    .from('cases')
+  const { error } = await (supabase
+    .from('cases') as any)
     .update({
       cache_id: cacheId,
       cache_expires_at: expiresAt.toISOString(),
@@ -97,14 +97,14 @@ export async function addEvidence(
   mimeType: string,
   metadata: Record<string, unknown> = {}
 ): Promise<Evidence> {
-  const { data, error } = await supabase
-    .from('evidence')
+  const { data, error } = await (supabase
+    .from('evidence') as any)
     .insert({
       case_id: caseId,
       file_path: filePath,
       file_type: fileType,
       mime_type: mimeType,
-      metadata,
+      metadata: metadata || {},
     })
     .select()
     .single();
@@ -146,7 +146,7 @@ export async function logAction(
     user_id: userId,
     action,
     details,
-  });
+  } as any);
 
   if (error) throw error;
 }
