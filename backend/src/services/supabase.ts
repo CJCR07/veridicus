@@ -1,10 +1,19 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../types/database.js';
+import type { Database, Case, Evidence, AuditLog, CaseInsert, EvidenceInsert, AuditLogInsert } from '../../../shared/types/database.js';
 
 // Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
+if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_ANON_KEY must be defined.');
+}
+
+/**
+ * Admin Supabase client with service role key
+ * Use for server-side operations that bypass RLS
+ */
 export const supabase: SupabaseClient<Database> = createClient<Database>(
   supabaseUrl,
   supabaseServiceKey,
@@ -16,9 +25,12 @@ export const supabase: SupabaseClient<Database> = createClient<Database>(
   }
 );
 
-// Typed helper for authenticated client
+/**
+ * Creates an authenticated Supabase client for user-scoped operations
+ * This respects RLS policies
+ */
 export function getAuthenticatedClient(accessToken: string): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, process.env.SUPABASE_ANON_KEY!, {
+  return createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
     global: {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -29,20 +41,12 @@ export function getAuthenticatedClient(accessToken: string): SupabaseClient<Data
 
 // ----- CASES -----
 
-export interface Case {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-  cache_id: string | null;
-  cache_expires_at: string | null;
-  user_id: string;
-}
-
 export async function createCase(userId: string, name: string, description?: string): Promise<Case> {
+  const insertData: CaseInsert = { name, description, user_id: userId };
+  
   const { data, error } = await supabase
     .from('cases')
-    .insert({ name, description, user_id: userId } as any)
+    .insert(insertData)
     .select()
     .single();
 
@@ -58,7 +62,7 @@ export async function getCasesByUser(userId: string): Promise<Case[]> {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 }
 
 export async function updateCaseCache(
@@ -66,8 +70,8 @@ export async function updateCaseCache(
   cacheId: string,
   expiresAt: Date
 ): Promise<void> {
-  const { error } = await (supabase
-    .from('cases') as any)
+  const { error } = await supabase
+    .from('cases')
     .update({
       cache_id: cacheId,
       cache_expires_at: expiresAt.toISOString(),
@@ -79,17 +83,6 @@ export async function updateCaseCache(
 
 // ----- EVIDENCE -----
 
-export interface Evidence {
-  id: string;
-  case_id: string;
-  file_path: string;
-  file_type: string;
-  mime_type: string;
-  token_count: number | null;
-  metadata: Record<string, unknown>;
-  created_at: string;
-}
-
 export async function addEvidence(
   caseId: string,
   filePath: string,
@@ -97,15 +90,17 @@ export async function addEvidence(
   mimeType: string,
   metadata: Record<string, unknown> = {}
 ): Promise<Evidence> {
-  const { data, error } = await (supabase
-    .from('evidence') as any)
-    .insert({
-      case_id: caseId,
-      file_path: filePath,
-      file_type: fileType,
-      mime_type: mimeType,
-      metadata: metadata || {},
-    })
+  const insertData: EvidenceInsert = {
+    case_id: caseId,
+    file_path: filePath,
+    file_type: fileType,
+    mime_type: mimeType,
+    metadata: metadata || {},
+  };
+
+  const { data, error } = await supabase
+    .from('evidence')
+    .insert(insertData)
     .select()
     .single();
 
@@ -121,19 +116,10 @@ export async function getEvidenceByCase(caseId: string): Promise<Evidence[]> {
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 }
 
 // ----- AUDIT LOGS -----
-
-export interface AuditLog {
-  id: string;
-  case_id: string;
-  user_id: string;
-  action: string;
-  details: Record<string, unknown>;
-  created_at: string;
-}
 
 export async function logAction(
   caseId: string,
@@ -141,12 +127,16 @@ export async function logAction(
   action: string,
   details: Record<string, unknown> = {}
 ): Promise<void> {
-  const { error } = await supabase.from('audit_logs').insert({
+  const insertData: AuditLogInsert = {
     case_id: caseId,
     user_id: userId,
     action,
     details,
-  } as any);
+  };
+
+  const { error } = await supabase
+    .from('audit_logs')
+    .insert(insertData);
 
   if (error) throw error;
 }
@@ -159,5 +149,8 @@ export async function getAuditLogsByCase(caseId: string): Promise<AuditLog[]> {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 }
+
+// Re-export types for convenience
+export type { Case, Evidence, AuditLog };

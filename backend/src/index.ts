@@ -3,6 +3,12 @@ import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import multipart from '@fastify/multipart';
 import { config } from 'dotenv';
+import { 
+  MAX_AUDIO_PAYLOAD_BYTES, 
+  MAX_FILE_SIZE_BYTES, 
+  DEFAULT_PORT,
+  API_VERSION 
+} from './constants.js';
 
 // Load environment variables
 config();
@@ -28,12 +34,12 @@ await fastify.register(cors, {
 });
 
 await fastify.register(websocket, {
-  options: { maxPayload: 1048576 * 10 }, // 10MB for audio chunks
+  options: { maxPayload: MAX_AUDIO_PAYLOAD_BYTES },
 });
 
 await fastify.register(multipart, {
   limits: {
-    fileSize: 1024 * 1024 * 500, // 500MB max file size
+    fileSize: MAX_FILE_SIZE_BYTES,
   },
 });
 
@@ -41,7 +47,7 @@ await fastify.register(multipart, {
 fastify.get('/health', async () => {
   return { 
     status: 'ok', 
-    version: '1.0.0',
+    version: API_VERSION,
     timestamp: new Date().toISOString(),
   };
 });
@@ -50,6 +56,8 @@ fastify.get('/health', async () => {
 await fastify.register(import('./api/cases.js'), { prefix: '/api/cases' });
 await fastify.register(import('./api/evidence.js'), { prefix: '/api/evidence' });
 await fastify.register(import('./api/analysis.js'), { prefix: '/api/analysis' });
+await fastify.register(import('./api/contradictions.js'), { prefix: '/api/contradictions' });
+await fastify.register(import('./api/analyses.js'), { prefix: '/api/analyses' });
 
 // WebSocket routes for Live API
 await fastify.register(import('./websocket/live-audio.js'));
@@ -57,7 +65,7 @@ await fastify.register(import('./websocket/live-audio.js'));
 // Start server
 const start = async () => {
   try {
-    const port = parseInt(process.env.PORT || '3001', 10);
+    const port = parseInt(process.env.PORT || String(DEFAULT_PORT), 10);
     const host = process.env.HOST || '0.0.0.0';
     
     await fastify.listen({ port, host });

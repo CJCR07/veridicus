@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Veridicus Frontend
 
-## Getting Started
+Modern forensic investigation interface built with **Next.js 16** and **React 19**.
 
-First, run the development server:
+## 🚀 Quick Start
 
 ```bash
+npm install
+cp .env.example .env.local
+# Edit .env.local with your configuration
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+frontend/
+├── app/                    # Next.js App Router
+│   ├── cases/             # Investigation archive
+│   ├── vault/             # Evidence management
+│   ├── reasoning/         # AI chat interface
+│   ├── vibe/              # Real-time audio analysis
+│   ├── timeline/          # Event chronology
+│   ├── contradictions/    # Conflict visualization
+│   ├── layout.tsx         # Root layout
+│   └── globals.css        # Global styles
+│
+├── components/            # Reusable components
+│   ├── sidebar.tsx        # Navigation sidebar
+│   ├── audio-visualizer.tsx
+│   ├── error-boundary.tsx
+│   └── providers.tsx      # React Query, etc.
+│
+├── lib/                   # Utilities
+│   ├── supabase.ts        # Supabase client
+│   ├── config.ts          # Environment config
+│   ├── audio-streaming.ts # WebSocket audio client
+│   └── api-schemas.ts     # Zod validation schemas
+│
+└── store/                 # State management
+    └── use-case-store.ts  # Zustand store
+```
 
-## Learn More
+## 🛠️ Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+| Technology | Purpose |
+|------------|---------|
+| Next.js 16 | App Router, React Server Components |
+| React 19 | UI components |
+| TailwindCSS 4 | Styling |
+| Zustand | State management |
+| TanStack Query | Server state & caching |
+| Framer Motion | Animations |
+| Zod | Runtime validation |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Design System
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Custom forensic-inspired theme:
 
-## Deploy on Vercel
+```css
+--ocean: #2c365a;  /* Primary color */
+--cream: #eee8df;  /* Background */
+--beige: #c4bcb0;  /* Borders, muted */
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Fonts:
+- **Inter** - Body text
+- **Playfair Display** - Headings
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📡 Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_WS_URL=ws://localhost:3001
+```
+
+## 🧪 Testing
+
+```bash
+npm run lint           # ESLint
+npx playwright test    # E2E tests
+```
+
+## 📦 Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+
+## ♿ Accessibility
+
+All pages include:
+- ARIA labels and roles
+- Keyboard navigation
+- Screen reader support
+- Focus management
+- Semantic HTML
+
+---
+
+See [main README](../README.md) for full documentation.

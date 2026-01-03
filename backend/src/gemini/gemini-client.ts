@@ -62,6 +62,29 @@ export interface GeminiConfig {
   maxOutputTokens?: number;
   systemInstruction?: string;
   caseId?: string;
+  userId?: string;
+}
+
+export interface Contradiction {
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  evidence_a_id?: string;
+  evidence_b_id?: string;
+  timestamps?: Record<string, unknown>;
+}
+
+export interface Citation {
+  page?: number;
+  timestamp?: string;
+  source: string;
+}
+
+export interface GeminiResponse {
+  text: string;
+  thoughts: string[];
+  usage: { inputTokens: number; outputTokens: number };
+  contradictions: Contradiction[];
+  citations?: Citation[];
 }
 
 /**
@@ -71,12 +94,7 @@ export async function generateWithThinking(
   prompt: string,
   contents: Content[] = [],
   config: GeminiConfig = {}
-): Promise<{
-  text: string;
-  thoughts: string[];
-  usage: { inputTokens: number; outputTokens: number };
-  contradictions: any[];
-}> {
+): Promise<GeminiResponse> {
   const model = await (genAI.models as any).get(MODELS[config.model || 'PRO']);
   
   const response = await model.generateContent({
@@ -101,8 +119,10 @@ export async function generateWithThinking(
   for (const candidate of response.candidates || []) {
     for (const part of candidate.content?.parts || []) {
       if ('thought' in part && part.thought) {
-        thoughts.push(part.text || '');
-      } else {
+        // Extract thought text properly
+        const thoughtText = (part as any).thought?.text || (part as any).text || '';
+        if (thoughtText) thoughts.push(thoughtText);
+      } else if ('text' in part) {
         text += part.text || '';
       }
     }
@@ -136,10 +156,14 @@ export async function createContextCache(
     },
   });
 
+  if (!cache.name || !cache.expireTime) {
+    throw new Error('Failed to create cache: missing name or expireTime');
+  }
+
   return {
-    cacheId: cache.name!,
+    cacheId: cache.name,
     tokenCount: cache.usageMetadata?.totalTokenCount || 0,
-    expiresAt: new Date(cache.expireTime!),
+    expiresAt: new Date(cache.expireTime),
   };
 }
 
@@ -150,12 +174,7 @@ export async function generateWithCache(
   cacheId: string,
   prompt: string,
   config: GeminiConfig = {}
-): Promise<{
-  text: string;
-  thoughts: string[];
-  citations: Array<{ page?: number; timestamp?: string; source: string }>;
-  contradictions: any[];
-}> {
+): Promise<GeminiResponse> {
   const cache = await (genAI.caches as any).get(cacheId);
   const model = await (genAI.models as any).get(MODELS.PRO);
   
@@ -185,7 +204,12 @@ export async function generateWithCache(
     chatContents.push(candidate!.content!);
 
     const toolResults = await Promise.all(functionCalls.map(async (fc: any) => {
-      const result = await executeForensicTool(fc.functionCall.name, fc.functionCall.args, (config as any).caseId);
+      const result = await executeForensicTool(
+        fc.functionCall.name,
+        fc.functionCall.args,
+        config.caseId || '',
+        config.userId || ''
+      );
       return {
         role: 'function',
         parts: [{
@@ -225,19 +249,40 @@ export async function generateWithCache(
   }
 
   // Attempt to parse structured JSON from the text
-  let contradictions: any[] = [];
+  let contradictions: Contradiction[] = [];
   try {
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[1]);
-      if (parsed.contradictions) contradictions = parsed.contradictions;
+      if (parsed.contradictions && Array.isArray(parsed.contradictions)) {
+        contradictions = parsed.contradictions.map((c: Record<string, unknown>) => ({
+          description: String(c.description || ''),
+          severity: (['low', 'medium', 'high', 'critical'].includes(String(c.severity)) 
+            ? c.severity as Contradiction['severity'] 
+            : 'medium'),
+          evidence_a_id: c.evidence_a_id as string | undefined,
+          evidence_b_id: c.evidence_b_id as string | undefined,
+          timestamps: (c.timestamps as Record<string, unknown>) || {}
+        }));
+      }
       if (parsed.summary && !text.includes(parsed.summary)) {
         text = parsed.summary + "\n\n" + text;
       }
     }
-  } catch (e) {}
+  } catch {
+    // JSON parsing failed, continue with empty contradictions
+  }
 
-  return { text, thoughts, citations, contradictions };
+  return { 
+    text, 
+    thoughts, 
+    citations, 
+    contradictions,
+    usage: {
+      inputTokens: turnResponse.usageMetadata?.promptTokenCount || 0,
+      outputTokens: turnResponse.usageMetadata?.candidatesTokenCount || 0,
+    }
+  };
 }
 
 export { genAI };

@@ -17,23 +17,35 @@ async function downloadFile(path: string): Promise<Buffer> {
  * Processes evidence using Gemini to extract forensic metadata
  */
 export async function processEvidenceMetadata(evidenceId: string) {
-  // 1. Get evidence details
+  // 1. Get evidence details with case ownership info
   const { data: evidence, error } = await supabase
     .from('evidence')
-    .select('*, cases(name)')
+    .select('*, cases(name, user_id)')
     .eq('id', evidenceId)
     .single();
 
   if (error || !evidence) throw new Error('Evidence not found');
 
+  // Type the evidence data properly
+  interface EvidenceWithCase {
+    id: string;
+    case_id: string;
+    file_path: string;
+    file_type: string;
+    mime_type: string;
+    metadata: Record<string, unknown>;
+    cases: { name: string; user_id: string } | null;
+  }
+
   try {
-    const evidenceData = evidence as any;
+    const evidenceData = evidence as EvidenceWithCase;
     // 2. Download file for Gemini
     const buffer = await downloadFile(evidenceData.file_path);
     const base64Data = buffer.toString('base64');
 
     // 3. Extract metadata using Gemini
-    const prompt = `Analyze this forensic evidence file for the case "${evidenceData.cases.name}". 
+    const caseName = evidenceData.cases?.name || 'Unknown Case';
+    const prompt = `Analyze this forensic evidence file for the case "${caseName}". 
     Perform a deep forensic analysis. 
     Return ONLY a JSON object with:
     {
@@ -66,8 +78,8 @@ export async function processEvidenceMetadata(evidenceId: string) {
     }
 
     // 4. Update evidence metadata in DB
-    await (supabase
-      .from('evidence') as any)
+    await supabase
+      .from('evidence')
       .update({
         metadata: {
           ...(evidenceData.metadata as object),
@@ -80,18 +92,21 @@ export async function processEvidenceMetadata(evidenceId: string) {
       .eq('id', evidenceId);
 
     // 5. Audit Logging
-    await logAction(
-      evidenceData.case_id,
-      evidenceData.cases?.user_id || 'system', 
-      'evidence_processed',
-      { evidence_id: evidenceId, summary: (metadata as any).summary }
-    );
+    if (evidenceData.cases?.user_id) {
+      await logAction(
+        evidenceData.case_id,
+        evidenceData.cases.user_id,
+        'evidence_processed',
+        { evidence_id: evidenceId, summary: (metadata as { summary?: string })?.summary }
+      );
+    }
 
     return metadata;
   } catch (err) {
-    const evidenceData = evidence as any;
+    const evidenceData = evidence as { metadata: Record<string, unknown>; case_id: string };
     console.error(`Metadata extraction failed for ${evidenceId}:`, err);
-    await (supabase.from('evidence') as any)
+    await supabase
+      .from('evidence')
       .update({
         metadata: {
           ...(evidenceData.metadata as object),

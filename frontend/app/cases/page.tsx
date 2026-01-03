@@ -1,52 +1,77 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, Calendar, FileText, Search, Plus, ExternalLink, Trash2 } from "lucide-react";
+import { Calendar, FileText, Search, Plus, ExternalLink, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCaseStore } from "@/store/use-case-store";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/lib/config";
+import { Case } from "@/../shared/types/database";
 
 export default function CasesDashboard() {
   const { setCurrentCase } = useCaseStore();
   const router = useRouter();
+  const [isCreating, setIsCreating] = useState(false);
 
   const { data: cases, isLoading, refetch } = useQuery({
     queryKey: ['cases'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('cases')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+      
+      const response = await fetch(`${API_URL}/api/cases`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch cases');
+      }
+      
+      return response.json() as Promise<Case[]>;
     }
   });
 
   const createCase = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const response = await fetch('http://localhost:3001/api/cases', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`
-      },
-      body: JSON.stringify({ 
-        name: `Case-${Math.floor(Math.random() * 10000)}`,
-        description: 'New forensic investigation.'
-      })
-    });
-    if (response.ok) {
-      refetch();
+    setIsCreating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${API_URL}/api/cases`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ 
+          name: `Case-${Math.floor(Math.random() * 10000)}`,
+          description: 'New forensic investigation.'
+        })
+      });
+      if (response.ok) {
+        await refetch();
+      }
+    } catch (err) {
+      console.error("Failed to create case:", err);
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const selectCase = (caseItem: any) => {
+  const selectCase = (caseItem: Case) => {
     setCurrentCase(caseItem);
     router.push('/vault');
   };
 
-  if (isLoading) return <div>Loading dossier archive...</div>;
+  if (isLoading) return (
+    <div className="h-[80vh] flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-ocean/20" />
+    </div>
+  );
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -57,22 +82,23 @@ export default function CasesDashboard() {
         </div>
         <button 
           onClick={createCase}
-          className="bg-ocean text-cream px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-ocean/20"
+          disabled={isCreating}
+          className="bg-ocean text-cream px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-ocean/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Plus className="w-5 h-5" />
-          Open New Dossier
+          {isCreating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+          {isCreating ? 'Initializing...' : 'Open New Dossier'}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(!cases || (cases as any[]).length === 0) ? (
+        {(!cases || cases.length === 0) ? (
           <div className="col-span-full py-20 text-center border-2 border-dashed border-beige/40 rounded-3xl bg-beige/5">
             <Search className="w-16 h-16 text-ocean/5 mx-auto mb-6" />
             <p className="text-xl font-serif text-ocean/40 italic">No forensic dossiers found in the current archive.</p>
             <p className="text-sm text-ocean/30 mt-2">Initialize a new investigation to begin processing evidence.</p>
           </div>
         ) : (
-          (cases as any[]).map((c) => (
+          cases.map((c) => (
             <motion.div
               key={c.id}
               whileHover={{ y: -4 }}

@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS analyses (
 CREATE TABLE IF NOT EXISTS contradictions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   analysis_id UUID NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
+  case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
   evidence_a_id UUID NOT NULL REFERENCES evidence(id),
   evidence_b_id UUID NOT NULL REFERENCES evidence(id),
   description TEXT NOT NULL,
@@ -74,6 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_cases_user_id ON cases(user_id);
 CREATE INDEX IF NOT EXISTS idx_evidence_case_id ON evidence(case_id);
 CREATE INDEX IF NOT EXISTS idx_analyses_case_id ON analyses(case_id);
 CREATE INDEX IF NOT EXISTS idx_contradictions_analysis_id ON contradictions(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_contradictions_case_id ON contradictions(case_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_case_id ON audit_logs(case_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
 
@@ -127,11 +129,12 @@ CREATE POLICY "Users can create analyses in own cases" ON analyses
 -- Contradictions policies
 CREATE POLICY "Users can view contradictions in own cases" ON contradictions
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM analyses 
-      JOIN cases ON cases.id = analyses.case_id 
-      WHERE analyses.id = contradictions.analysis_id AND cases.user_id = auth.uid()
-    )
+    EXISTS (SELECT 1 FROM cases WHERE cases.id = contradictions.case_id AND cases.user_id = auth.uid())
+  );
+
+CREATE POLICY "Users can create contradictions in own cases" ON contradictions
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM cases WHERE cases.id = contradictions.case_id AND cases.user_id = auth.uid())
   );
 
 -- Audit logs policies (read-only for users)

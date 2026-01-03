@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import Sidebar from "@/components/sidebar";
 import { ErrorBoundary } from "@/components/error-boundary";
+import Providers from "@/components/providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,8 +19,6 @@ export const metadata: Metadata = {
   title: "Veridicus | Forensic Reasoning Engine",
   description: "Autonomous multimodal forensic analysis workstation",
 };
-
-import Providers from "@/components/providers";
 
 export default function RootLayout({
   children,

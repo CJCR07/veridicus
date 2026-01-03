@@ -1,7 +1,19 @@
 import { supabase } from './supabase.js';
 
-export async function executeForensicTool(name: string, args: any, caseId: string) {
+export async function executeForensicTool(name: string, args: any, caseId: string, userId: string) {
   console.log(`🛠️ Executing forensic tool: ${name}`, args);
+
+  // Verify case ownership
+  const { data: caseItem, error: caseError } = await supabase
+    .from('cases')
+    .select('id')
+    .eq('id', caseId)
+    .eq('user_id', userId)
+    .single();
+
+  if (caseError || !caseItem) {
+    return { error: 'Case not found or access denied' };
+  }
 
   switch (name) {
     case 'search_evidence': {
@@ -18,17 +30,20 @@ export async function executeForensicTool(name: string, args: any, caseId: strin
       const { data, error } = await dbQuery;
       if (error) return { error: error.message };
 
-      const matches = ((data as any[]) || []).filter(e => 
+      const matches = (data || []).filter(e => 
         JSON.stringify(e.metadata).toLowerCase().includes(query.toLowerCase())
       );
 
       return {
         count: matches.length,
-        results: matches.slice(0, 5).map(m => ({
-          id: m.id,
-          path: m.file_path,
-          summary: (m.metadata as any)?.summary || 'No summary available'
-        }))
+        results: matches.slice(0, 5).map(m => {
+          const metadata = m.metadata as { summary?: string } | null;
+          return {
+            id: m.id,
+            path: m.file_path,
+            summary: metadata?.summary || 'No summary available'
+          };
+        })
       };
     }
 
