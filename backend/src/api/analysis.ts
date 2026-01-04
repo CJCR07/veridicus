@@ -31,7 +31,7 @@ export default async function analysisRoutes(fastify: FastifyInstance) {
 
       // 2. Perform reasoning
       let result;
-      const caseData = caseItem;
+      const caseData = caseItem as any;
       if (caseData.cache_id && caseData.cache_expires_at && new Date(caseData.cache_expires_at) > new Date()) {
         // Use cached context (4x cheaper processing)
         result = await generateWithCache(caseData.cache_id, query, { caseId, userId: user.id });
@@ -41,19 +41,18 @@ export default async function analysisRoutes(fastify: FastifyInstance) {
       }
 
       // 3. Log the analysis
-      const { data: analysis, error: analysisError } = await supabase
-        .from('analyses')
+      const { data: analysis, error: analysisError } = await (supabase.from('analyses') as any)
         .insert([{
           case_id: caseId,
           query,
           thought_signature: null,
           thoughts: result.thoughts,
-          result: { text: result.text },
-          citations: 'citations' in result ? result.citations : [],
+          result: { text: result.text } as any,
+          citations: ('citations' in result ? result.citations : []) as any,
           token_usage: {
-            input: result.usage.inputTokens,
-            output: result.usage.outputTokens,
-          },
+            input: (result.usage as any).inputTokens,
+            output: (result.usage as any).outputTokens,
+          } as any,
         }])
         .select()
         .single();
@@ -62,15 +61,14 @@ export default async function analysisRoutes(fastify: FastifyInstance) {
 
       // 4. Store contradictions if any were detected
       if (result.contradictions && result.contradictions.length > 0 && analysis) {
-        await supabase
-          .from('contradictions')
-          .insert(result.contradictions.map((c) => ({
+        await (supabase.from('contradictions') as any)
+          .insert(result.contradictions.map((c: any) => ({
             analysis_id: analysis.id,
             case_id: caseId,
             description: c.description,
             severity: c.severity || 'medium',
-            evidence_a_id: c.evidence_a_id,
-            evidence_b_id: c.evidence_b_id,
+            evidence_a_id: c.evidence_a_id || null,
+            evidence_b_id: c.evidence_b_id || null,
             timestamps: c.timestamps || {}
           })));
       }

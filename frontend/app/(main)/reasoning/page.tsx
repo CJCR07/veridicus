@@ -40,10 +40,19 @@ export default function ReasoningEngine() {
     setQuery("");
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
+      let session = null;
+
+      if (!DEV_BYPASS_AUTH) {
+        const { data: authData } = await supabase.auth.getSession();
+        session = authData.session;
+        if (!session?.access_token) {
+          throw new Error('Please sign in to use the reasoning engine');
+        }
+      }
       
-      if (!session?.access_token) {
-        throw new Error('Please sign in to use the reasoning engine');
+      if (!session) {
+        throw new Error('Authorization session lost. Please sign in again.');
       }
       
       const response = await fetch(`${API_URL}/api/analysis/query`, {

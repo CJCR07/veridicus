@@ -138,15 +138,17 @@ export class AudioStreamingService {
     }
     this.lastSendTime = now;
 
-    // Combine buffered chunks
-    const totalLength = this.audioChunkBuffer.reduce((acc, chunk) => acc + chunk.length, 0);
+    // Combine buffered chunks and clear immediately to avoid losing new arrivals
+    const batch = this.audioChunkBuffer;
+    this.audioChunkBuffer = [];
+    
+    const totalLength = batch.reduce((acc, chunk) => acc + chunk.length, 0);
     const combinedData = new Int16Array(totalLength);
     let offset = 0;
-    for (const chunk of this.audioChunkBuffer) {
+    for (const chunk of batch) {
       combinedData.set(chunk, offset);
       offset += chunk.length;
     }
-    this.audioChunkBuffer = [];
 
     // Convert to base64 and send
     const bytes = new Uint8Array(combinedData.buffer);

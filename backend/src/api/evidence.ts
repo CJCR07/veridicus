@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { supabase, logAction } from '../services/supabase.js';
 import { processEvidenceMetadata } from '../services/evidence-processor.js';
 import { authenticate } from '../middleware/auth.js';
-import { isValidUUID, MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB } from '../constants.js';
+import { isValidUUID } from '../constants.js';
 
 export default async function evidenceRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authenticate);
@@ -66,9 +66,14 @@ export default async function evidenceRoutes(fastify: FastifyInstance) {
 
     const buffer = await data.toBuffer();
     
-    // Validate file size
-    if (buffer.length > MAX_FILE_SIZE_BYTES) {
-      return reply.status(400).send({ error: `File size exceeds maximum limit of ${MAX_FILE_SIZE_MB}MB` });
+    // Forensic: Validate file type via magic bytes (basic check for PDF, PNG, JPG)
+    const isPDF = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46; // %PDF
+    const isPNG = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47; // .PNG
+    const isJPG = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF; // JPG
+    
+    if (!isPDF && !isPNG && !isJPG && data.mimetype !== 'application/octet-stream') {
+      console.warn(`[UPLOAD] ⚠️ Blocked potentially unsafe file upload: ${data.filename} (${data.mimetype})`);
+      return reply.status(415).send({ error: 'Unsupported forensic file format. please upload PDF or Image' });
     }
     
     // 1. Upload to Supabase Storage
@@ -82,8 +87,7 @@ export default async function evidenceRoutes(fastify: FastifyInstance) {
     if (storageError) return reply.status(500).send({ error: storageError.message });
 
     // 2. Add record to database
-    const { data: evidence, error: dbError } = await supabase
-      .from('evidence')
+    const { data: evidence, error: dbError } = await (supabase.from('evidence') as any)
       .insert([{
         case_id: caseId,
         file_path: storageData.path,
@@ -109,8 +113,15 @@ export default async function evidenceRoutes(fastify: FastifyInstance) {
 
     // 4. Trigger automated processing (background)
     if (evidence?.id) {
+      // Forensic: Log evidence upload
+      await logAction(caseId, (request.user as any).id, 'evidence_uploaded', { 
+        evidenceId: evidence.id, 
+        filename: data.filename 
+      });
+
       processEvidenceMetadata(evidence.id).catch((err) => {
-        console.error('Background evidence processing failed:', err);
+        console.error(`[PROCESS] ❌ Background evidence processing failed for ${evidence.id}:`, err);
+        // We could update the evidence status to 'failed' here
       });
     }
 

@@ -116,8 +116,8 @@ export interface Database {
           id: string;
           analysis_id: string;
           case_id: string;
-          evidence_a_id: string;
-          evidence_b_id: string;
+          evidence_a_id: string | null;
+          evidence_b_id: string | null;
           description: string;
           severity: 'low' | 'medium' | 'high' | 'critical';
           timestamps: Record<string, unknown>;
@@ -127,8 +127,8 @@ export interface Database {
           id?: string;
           analysis_id: string;
           case_id: string;
-          evidence_a_id: string;
-          evidence_b_id: string;
+          evidence_a_id: string | null;
+          evidence_b_id: string | null;
           description: string;
           severity: 'low' | 'medium' | 'high' | 'critical';
           timestamps?: Record<string, unknown>;
@@ -138,8 +138,8 @@ export interface Database {
           id?: string;
           analysis_id?: string;
           case_id?: string;
-          evidence_a_id?: string;
-          evidence_b_id?: string;
+          evidence_a_id?: string | null;
+          evidence_b_id?: string | null;
           description?: string;
           severity?: 'low' | 'medium' | 'high' | 'critical';
           timestamps?: Record<string, unknown>;

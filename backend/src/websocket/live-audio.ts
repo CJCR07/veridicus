@@ -75,8 +75,8 @@ export default async function liveAudioRoutes(fastify: FastifyInstance) {
     
     const initSession = async () => {
       try {
-        const model = await (genAI.models as Record<string, unknown>).get(MODELS.LIVE);
-        session = await (model as { startChat: (config: unknown) => Promise<unknown> }).startChat({
+        const model = (genAI as any).getGenerativeModel({ model: MODELS.LIVE });
+        session = await (model as any).startChat({
           config: {
             systemInstruction: `You are the Vibe Forensics module of Veridicus. 
             Analyze audio for:
@@ -263,11 +263,15 @@ export default async function liveAudioRoutes(fastify: FastifyInstance) {
 
     connection.on('close', () => {
       clearInterval(processingInterval);
+      session = null;
+      sessionReady = false;
       fastify.log.info('🔌 Vibe session closed');
     });
 
     connection.on('error', (err: Error) => {
       clearInterval(processingInterval);
+      session = null;
+      sessionReady = false;
       fastify.log.error({ err }, 'WebSocket error');
     });
   });

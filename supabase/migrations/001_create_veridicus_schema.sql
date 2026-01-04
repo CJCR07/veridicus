@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS contradictions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   analysis_id UUID NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
   case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
-  evidence_a_id UUID NOT NULL REFERENCES evidence(id),
-  evidence_b_id UUID NOT NULL REFERENCES evidence(id),
+  evidence_a_id UUID REFERENCES evidence(id),
+  evidence_b_id UUID REFERENCES evidence(id),
   description TEXT NOT NULL,
   severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
   timestamps JSONB DEFAULT '{}',
@@ -78,6 +78,14 @@ CREATE INDEX IF NOT EXISTS idx_contradictions_analysis_id ON contradictions(anal
 CREATE INDEX IF NOT EXISTS idx_contradictions_case_id ON contradictions(case_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_case_id ON audit_logs(case_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+
+-- Performance: HNSW Index for vector search (1536 dims)
+-- Using cosine distance as it's standard for most embedding models
+CREATE INDEX ON evidence USING hnsw (embedding vector_cosine_ops);
+
+-- Performance: Foreign key indexes for contradictions table
+CREATE INDEX IF NOT EXISTS idx_contradictions_evidence_a ON contradictions(evidence_a_id);
+CREATE INDEX IF NOT EXISTS idx_contradictions_evidence_b ON contradictions(evidence_b_id);
 
 -- Enable Row Level Security
 ALTER TABLE cases ENABLE ROW LEVEL SECURITY;
@@ -141,6 +149,49 @@ CREATE POLICY "Users can create contradictions in own cases" ON contradictions
 CREATE POLICY "Users can view audit logs for own cases" ON audit_logs
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM cases WHERE cases.id = audit_logs.case_id AND cases.user_id = auth.uid())
+  );
+
+-- Missing Update/Delete policies for data integrity
+CREATE POLICY "Users can update evidence in own cases" ON evidence
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM cases WHERE cases.id = evidence.case_id AND cases.user_id = auth.uid())
+  );
+
+CREATE POLICY "Users can update analyses in own cases" ON analyses
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM cases WHERE cases.id = analyses.case_id AND cases.user_id = auth.uid())
+  );
+
+CREATE POLICY "Users can delete analyses from own cases" ON analyses
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM cases WHERE cases.id = analyses.case_id AND cases.user_id = auth.uid())
+  );
+
+CREATE POLICY "Users can update contradictions in own cases" ON contradictions
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM cases WHERE cases.id = contradictions.case_id AND cases.user_id = auth.uid())
+  );
+
+CREATE POLICY "Users can delete contradictions from own cases" ON contradictions
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM cases WHERE cases.id = contradictions.case_id AND cases.user_id = auth.uid())
+  );
+
+-- Storage bucket configuration
+-- Note: Replace with actual bucket creation in dashboard if needed, or use HTTP API via migrations
+-- Here we define the RLS policies for a bucket named 'evidence'
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('evidence', 'evidence', false)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Evidence storage access" ON storage.objects
+  FOR ALL TO authenticated
+  USING (
+    bucket_id = 'evidence' AND
+    (SELECT auth.uid() = cases.user_id 
+     FROM cases 
+     WHERE cases.id::text = (storage.foldername(name))[1])
   );
 
 -- Create function to auto-update updated_at

@@ -4,8 +4,24 @@ import { supabase } from '../services/supabase.js';
 /**
  * Authentication middleware
  * Validates Bearer token and attaches user to request
+ * 
+ * DEV MODE: Set DEV_BYPASS_AUTH=true to skip auth for testing
  */
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+  // Development bypass for testing (DO NOT USE IN PRODUCTION)
+  const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  const isBypassEnabled = process.env.DEV_BYPASS_AUTH === 'true';
+  const hasServiceRole = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (isDev && isBypassEnabled && !hasServiceRole) {
+    console.log('[AUTH] ⚠️  DEV BYPASS MODE - Using test user');
+    request.user = {
+      id: '00000000-0000-0000-0000-000000000001',
+      email: 'test@veridicus.dev',
+    };
+    return;
+  }
+
   const authHeader = request.headers.authorization;
 
   if (!authHeader) {

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { supabase } from '../services/supabase.js';
+import { supabase, logAction } from '../services/supabase.js';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { isValidUUID } from '../constants.js';
@@ -54,13 +54,16 @@ export default async function caseRoutes(fastify: FastifyInstance) {
       const { name, description } = schema.parse(request.body);
       const user = request.user;
 
-      const { data, error } = await supabase
-        .from('cases')
+      const { data, error } = await (supabase.from('cases') as any)
         .insert([{ name, description, user_id: user.id }])
         .select()
         .single();
 
       if (error) throw error;
+      
+      // Forensic: Log case creation
+      await logAction((data as any).id, user.id, 'case_created', { name: (data as any).name });
+      
       return reply.status(201).send(data);
     } catch (err) {
       return reply.status(400).send({ error: err instanceof Error ? err.message : 'Invalid request' });
@@ -95,6 +98,10 @@ export default async function caseRoutes(fastify: FastifyInstance) {
       .eq('user_id', user.id);
 
     if (error) return reply.status(500).send({ error: error.message });
+    
+    // Forensic: Log case deletion
+    await logAction(id, user.id, 'case_deleted', { name: (caseItem as any).name });
+    
     return reply.status(204).send();
   });
 }

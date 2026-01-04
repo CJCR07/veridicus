@@ -2,7 +2,14 @@ import { GoogleGenAI, Content } from '@google/genai';
 import { executeForensicTool } from '../services/reasoning-service.js';
 
 // Initialize Gemini client
-const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY! });
+// Validate API Key early
+const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
+if (!GOOGLE_AI_API_KEY) {
+  console.error('[GEMINI] ❌ GOOGLE_AI_API_KEY is missing from environment variables');
+  // In production, we should probably exit, but for now we'll log and catch at runtime
+}
+
+const genAI = new GoogleGenAI({ apiKey: GOOGLE_AI_API_KEY || 'MISSING_KEY' });
 
 // Model configurations
 export const MODELS = {

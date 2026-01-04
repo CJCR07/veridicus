@@ -3,8 +3,16 @@
  * Centralized configuration values to avoid magic numbers
  */
 
-// Re-export validation utilities from shared
-export { isValidUUID, UUID_REGEX, isValidSeverity, SEVERITY_LEVELS } from '../../shared/utils/validation.js';
+// Validation utilities (moved from shared for ESM compatibility)
+export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isValidUUID(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
+export const SEVERITY_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
+export type SeverityLevel = typeof SEVERITY_LEVELS[number];
+export function isValidSeverity(severity: string): severity is SeverityLevel {
+  return SEVERITY_LEVELS.includes(severity as SeverityLevel);
+}
 
 // File size limits
 export const MAX_FILE_SIZE_MB = 500;
