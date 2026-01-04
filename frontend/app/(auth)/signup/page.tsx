@@ -46,45 +46,45 @@ export default function SignupPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h2 className="text-xl font-bold text-slate-100">Initialize Credentials</h2>
-        <p className="text-slate-400 text-sm">Register as a new investigator on the Veridicus workstation.</p>
+        <h2 className="text-xl font-serif font-bold text-alabaster">Initialize Credentials</h2>
+        <p className="text-powder/60 text-sm">Register as a new investigator on the Veridicus workstation.</p>
       </div>
 
       <form onSubmit={handleSignup} className="space-y-4">
         <div className="space-y-3">
           <div className="relative group">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-powder/40 group-focus-within:text-pacific transition-colors" />
             <input
               type="email"
               placeholder="investigator@veridicus.dev"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all text-sm"
+              className="w-full bg-carbon/50 border border-charcoal rounded-xl py-2.5 pl-10 pr-4 text-alabaster placeholder:text-powder/20 focus:outline-none focus:border-pacific/50 transition-all text-sm"
             />
           </div>
 
           <div className="relative group">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-powder/40 group-focus-within:text-pacific transition-colors" />
             <input
               type="password"
               placeholder="Investigation Password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all text-sm"
+              className="w-full bg-carbon/50 border border-charcoal rounded-xl py-2.5 pl-10 pr-4 text-alabaster placeholder:text-powder/20 focus:outline-none focus:border-pacific/50 transition-all text-sm"
             />
           </div>
 
           <div className="relative group">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-powder/40 group-focus-within:text-pacific transition-colors" />
             <input
               type="password"
               placeholder="Confirm Password"
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all text-sm"
+              className="w-full bg-carbon/50 border border-charcoal rounded-xl py-2.5 pl-10 pr-4 text-alabaster placeholder:text-powder/20 focus:outline-none focus:border-pacific/50 transition-all text-sm"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-slate-100 hover:bg-white text-slate-950 font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-alabaster hover:bg-white text-carbon font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -111,10 +111,10 @@ export default function SignupPage() {
         </button>
       </form>
 
-      <div className="pt-4 text-center border-t border-slate-800/50">
-        <p className="text-slate-500 text-xs">
+      <div className="pt-4 text-center border-t border-charcoal/50">
+        <p className="text-powder/40 text-xs">
           Already registered?{" "}
-          <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+          <Link href="/login" className="text-pacific hover:text-powder font-bold transition-colors">
             investigator portal
           </Link>
         </p>

@@ -129,21 +129,21 @@ export default function CasesDashboard() {
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-carbon/80 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-slate-900 border border-red-500/20 rounded-2xl p-8 max-w-md w-full shadow-2xl"
+              className="bg-charcoal border border-red-500/20 rounded-2xl p-8 max-w-md w-full shadow-2xl"
             >
-              <h2 className="text-xl font-bold text-slate-100 mb-2">Purge Forensic Dossier?</h2>
-              <p className="text-slate-400 text-sm mb-8">
+              <h2 className="text-xl font-bold text-alabaster mb-2">Purge Forensic Dossier?</h2>
+              <p className="text-powder/40 text-sm mb-8">
                 This action is irreversible. All evidence, analyses, and contradictions associated with this case will be permanently deleted from the workstation.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors font-medium"
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-carbon/50 hover:bg-carbon text-powder/60 transition-colors font-medium"
                 >
                   Cancel
                 </button>
@@ -163,13 +163,13 @@ export default function CasesDashboard() {
 
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-4xl font-serif font-bold text-slate-100 italic">Investigation Archive</h2>
-          <p className="text-slate-400 mt-1 lowercase">High-level repository of all active forensic dossiers.</p>
+          <h2 className="text-4xl font-serif font-bold text-alabaster italic">Investigation Archive</h2>
+          <p className="text-pacific mt-1 lowercase font-medium">High-level repository of all active forensic dossiers.</p>
         </div>
         <button 
           onClick={createCase}
           disabled={isCreating}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-pacific text-carbon px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-pacific/10 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isCreating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
           {isCreating ? 'Initializing...' : 'Open New Dossier'}
@@ -178,52 +178,52 @@ export default function CasesDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(!cases || cases.length === 0) ? (
-          <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-800/50 rounded-3xl bg-slate-900/10">
-            <Search className="w-16 h-16 text-slate-800 mx-auto mb-6" />
-            <p className="text-xl font-serif text-slate-500 italic">No forensic dossiers found in the current archive.</p>
-            <p className="text-sm text-slate-600 mt-2 lowercase">Initialize a new investigation to begin processing evidence.</p>
+          <div className="col-span-full py-24 text-center border-2 border-dashed border-charcoal rounded-3xl bg-charcoal/10">
+            <Search className="w-16 h-16 text-charcoal/40 mx-auto mb-6" />
+            <p className="text-xl font-serif text-powder/40 italic">No forensic dossiers found in the current archive.</p>
+            <p className="text-sm text-powder/20 mt-2 lowercase">Initialize a new investigation to begin processing evidence.</p>
           </div>
         ) : (
           cases.map((c) => (
             <motion.div
               key={c.id}
               whileHover={{ y: -4 }}
-              className="bg-slate-900/50 border border-slate-800/50 rounded-2xl p-6 cursor-pointer group hover:border-indigo-500/30 transition-all backdrop-blur-sm relative overflow-hidden"
+              className="bg-charcoal/20 border border-charcoal rounded-2xl p-6 cursor-pointer group hover:border-pacific/30 transition-all backdrop-blur-sm relative overflow-hidden"
               onClick={() => selectCase(c)}
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-slate-800/50 rounded-lg group-hover:bg-indigo-500/10 transition-colors">
-                  <FileText className="w-6 h-6 text-indigo-400" />
+                <div className="p-2 bg-charcoal/50 rounded-lg group-hover:bg-pacific/10 transition-colors">
+                  <FileText className="w-6 h-6 text-pacific" />
                 </div>
                 <div className="flex gap-2">
                   <button 
                     onClick={(e) => handleDelete(e, c.id)}
-                    className="p-1.5 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                    className="p-1.5 text-powder/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <Plus className="w-4 h-4 rotate-45" />
                   </button>
-                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest pt-1">
+                  <span className="text-[10px] font-bold text-powder/20 uppercase tracking-widest pt-1">
                     ID: {c.id.substring(0, 8)}
                   </span>
                 </div>
               </div>
               
-              <h3 className="text-xl font-serif font-bold text-slate-100 mb-2 truncate">{c.name}</h3>
-              <p className="text-sm text-slate-400 line-clamp-2 mb-6 h-10">
+              <h3 className="text-xl font-serif font-bold text-alabaster mb-2 truncate">{c.name}</h3>
+              <p className="text-sm text-powder/40 line-clamp-2 mb-6 h-10">
                 {c.description || 'No specialized description provided for this forensic dossier.'}
               </p>
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-800/50">
-                <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <div className="flex items-center justify-between pt-4 border-t border-charcoal">
+                <div className="flex items-center gap-2 text-[11px] text-powder/40">
                   <Calendar className="w-3.5 h-3.5" />
                   {new Date(c.created_at).toLocaleDateString()}
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase group-hover:text-indigo-400 transition-colors">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-powder/20 uppercase group-hover:text-pacific transition-colors">
                   Review <ExternalLink className="w-3 h-3" />
                 </div>
               </div>
             </motion.div>
-        )))}
+          )))}
       </div>
     </div>
   );

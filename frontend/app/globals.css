@@ -1,19 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #eee8df; /* Cream */
-  --foreground: #2c365a; /* Deep Ocean */
-  --beige: #c4bcb0;
-  --ocean: #2c365a;
-  --cream: #eee8df;
+  /* User-provided palette */
+  --alabaster: #d8dbe2;
+  --powder: #a9bcd0;
+  --pacific: #58a4b0;
+  --charcoal: #373f51;
+  --carbon: #1b1b1e;
+
+  --background: var(--carbon);
+  --foreground: var(--alabaster);
+  --primary: var(--pacific);
+  --secondary: var(--charcoal);
+  --muted: var(--powder);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-beige: var(--beige);
-  --color-ocean: var(--ocean);
-  --color-cream: var(--cream);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-powder: var(--powder);
+  --color-charcoal: var(--charcoal);
+  --color-carbon: var(--carbon);
+  --color-alabaster: var(--alabaster);
+  --color-pacific: var(--pacific);
 
   --font-sans: "Inter", var(--font-geist-sans);
   --font-serif: "Playfair Display", serif;

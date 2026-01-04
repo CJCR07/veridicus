@@ -196,20 +196,20 @@ export default function EvidenceVault() {
 
   if (loading) return (
     <div className="h-[80vh] flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-ocean/20" aria-label="Loading vault" />
+      <Loader2 className="w-8 h-8 animate-spin text-pacific/20" aria-label="Loading vault" />
     </div>
   );
 
   if (error) return (
     <div className="h-[80vh] flex flex-col items-center justify-center gap-4 text-center p-8" role="alert">
-      <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-2">
-        <AlertCircle className="w-8 h-8 text-red-600" aria-hidden="true" />
+      <div className="w-16 h-16 rounded-full bg-red-100/10 flex items-center justify-center mb-2">
+        <AlertCircle className="w-8 h-8 text-red-500" aria-hidden="true" />
       </div>
-      <h2 className="text-xl font-serif font-bold text-ocean">Investigation Interrupted</h2>
-      <p className="text-ocean/60 max-w-md">{error}</p>
+      <h2 className="text-xl font-serif font-bold text-alabaster">Investigation Interrupted</h2>
+      <p className="text-alabaster/60 max-w-md">{error}</p>
       <button 
         onClick={() => window.location.reload()}
-        className="mt-4 px-6 py-2 bg-ocean text-cream rounded-lg font-bold hover:opacity-90 transition-all"
+        className="mt-4 px-6 py-2 bg-pacific text-carbon rounded-lg font-bold hover:bg-pacific/90 transition-all"
       >
         Retry Initialization
       </button>
@@ -220,23 +220,23 @@ export default function EvidenceVault() {
     <main className="space-y-8" role="main" aria-labelledby="page-title">
       <header className="flex items-center justify-between">
         <div>
-          <h1 id="page-title" className="text-3xl font-serif font-bold text-ocean">Evidence Vault</h1>
+          <h1 id="page-title" className="text-3xl font-serif font-bold text-alabaster">Evidence Vault</h1>
           <div className="flex items-center gap-2 mt-2">
-            <label htmlFor="case-select" className="text-[10px] font-bold text-ocean/40 uppercase tracking-widest">
+            <label htmlFor="case-select" className="text-[10px] font-bold text-alabaster/40 uppercase tracking-widest">
               Active Corpus
             </label>
             <select 
               id="case-select"
               value={currentCase?.id || ''} 
               onChange={(e) => handleCaseSelect(e.target.value)}
-              className="bg-beige/20 border border-beige/40 px-3 py-1 rounded text-xs text-ocean font-bold outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/20"
+              className="bg-charcoal/20 border border-charcoal/40 px-3 py-1 rounded text-xs text-alabaster font-bold outline-none focus:border-pacific focus:ring-2 focus:ring-pacific/20"
               aria-label="Select active case"
             >
-              {cases.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {cases.map(c => <option key={c.id} value={c.id} className="bg-carbon text-alabaster">{c.name}</option>)}
             </select>
             <button 
               onClick={() => setIsNewCaseModalOpen(true)}
-              className="p-1.5 bg-ocean text-cream rounded-full hover:bg-ocean/90 transition-colors focus:ring-2 focus:ring-ocean/40"
+              className="p-1.5 bg-pacific text-carbon rounded-full hover:bg-pacific/90 transition-colors focus:ring-2 focus:ring-pacific/40"
               aria-label="Create new case"
             >
               <Plus className="w-3 h-3" aria-hidden="true" />
@@ -248,20 +248,20 @@ export default function EvidenceVault() {
       {/* New Case Modal */}
       {isNewCaseModalOpen && (
         <div 
-          className="fixed inset-0 bg-ocean/20 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-carbon/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
         >
-          <div className="bg-cream p-8 rounded-xl border border-beige shadow-2xl w-full max-w-md">
-            <h2 id="modal-title" className="text-xl font-serif font-bold text-ocean mb-4">
+          <div className="bg-charcoal p-8 rounded-xl border border-charcoal shadow-2xl w-full max-w-md">
+            <h2 id="modal-title" className="text-xl font-serif font-bold text-alabaster mb-4">
               Initialize Investigation
             </h2>
             <label htmlFor="case-name" className="sr-only">Case name</label>
             <input 
               id="case-name"
               autoFocus
-              className="w-full bg-beige/10 border border-beige p-3 rounded-lg outline-none text-ocean font-medium focus:border-ocean focus:ring-2 focus:ring-ocean/20 transition-colors"
+              className="w-full bg-carbon/50 border border-charcoal p-3 rounded-lg outline-none text-alabaster font-medium focus:border-pacific focus:ring-2 focus:ring-pacific/20 transition-colors"
               placeholder="e.g., Project Bluebeam Forensics"
               value={newCaseName}
               onChange={(e) => setNewCaseName(e.target.value)}
@@ -275,7 +275,7 @@ export default function EvidenceVault() {
             <div className="flex justify-end gap-3 mt-8">
               <button 
                 onClick={() => setIsNewCaseModalOpen(false)}
-                className="px-4 py-2 text-sm font-bold text-ocean/60 hover:text-ocean"
+                className="px-4 py-2 text-sm font-bold text-alabaster/60 hover:text-alabaster"
                 disabled={isCreatingCase}
               >
                 Cancel
@@ -283,7 +283,7 @@ export default function EvidenceVault() {
               <button 
                 onClick={handleCreateCase}
                 disabled={isCreatingCase || !newCaseName}
-                className="px-6 py-2 bg-ocean text-cream rounded-lg text-sm font-bold shadow-lg hover:shadow-ocean/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2 bg-pacific text-carbon rounded-lg text-sm font-bold shadow-lg hover:bg-pacific/90 transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 {isCreatingCase && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
                 {isCreatingCase ? 'Creating...' : 'Create Corpus'}
@@ -297,18 +297,18 @@ export default function EvidenceVault() {
       <div 
         {...getRootProps()} 
         className={`border-2 border-dashed rounded-xl p-12 transition-all cursor-pointer flex flex-col items-center justify-center gap-4
-          ${isDragActive ? 'border-ocean bg-ocean/5 bg-opacity-10 scale-[1.01]' : 'border-beige hover:border-ocean/40'}`}
+          ${isDragActive ? 'border-pacific bg-pacific/5 scale-[1.01]' : 'border-charcoal hover:border-pacific/40'}`}
         role="button"
         aria-label="Drop files here or click to upload evidence"
         tabIndex={0}
       >
         <input {...getInputProps()} aria-label="File upload" />
-        <div className="w-16 h-16 rounded-full bg-beige/30 flex items-center justify-center" aria-hidden="true">
-          <Upload className="w-8 h-8 text-ocean/60" />
+        <div className="w-16 h-16 rounded-full bg-charcoal/30 flex items-center justify-center" aria-hidden="true">
+          <Upload className="w-8 h-8 text-pacific/60" />
         </div>
         <div className="text-center">
-          <p className="font-bold text-ocean">Drop raw evidence here</p>
-          <p className="text-xs text-ocean/60 mt-1">PDF, MP4, MP3, PNG (Up to 500MB per file)</p>
+          <p className="font-bold text-alabaster">Drop raw evidence here</p>
+          <p className="text-xs text-alabaster/60 mt-1">PDF, MP4, MP3, PNG (Up to 500MB per file)</p>
         </div>
       </div>
 
@@ -325,10 +325,10 @@ export default function EvidenceVault() {
                 aria-labelledby={`evidence-${item.id}-title`}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-beige/40 flex items-center justify-center" aria-hidden="true">
-                    {item.file_type === 'video' ? <FileVideo className="w-5 h-5 text-ocean" /> : 
-                     item.file_type === 'audio' ? <FileAudio className="w-5 h-5 text-ocean" /> : 
-                     <FileText className="w-5 h-5 text-ocean" />}
+                  <div className="w-10 h-10 rounded-lg bg-charcoal/40 flex items-center justify-center" aria-hidden="true">
+                    {item.file_type === 'video' ? <FileVideo className="w-5 h-5 text-pacific" /> : 
+                     item.file_type === 'audio' ? <FileAudio className="w-5 h-5 text-pacific" /> : 
+                     <FileText className="w-5 h-5 text-pacific" />}
                   </div>
                 </div>
 
@@ -336,35 +336,35 @@ export default function EvidenceVault() {
                   const metadata = item.metadata as EvidenceMetadata;
                   return (
                     <>
-                      <h3 id={`evidence-${item.id}-title`} className="font-bold text-ocean truncate mb-1">
+                      <h3 id={`evidence-${item.id}-title`} className="font-bold text-alabaster truncate mb-1">
                         {metadata?.originalName || item.file_path.split('/').pop()}
                       </h3>
-                      <p className="text-xs text-ocean/60 font-medium">Exhibit ID: {item.id.substring(0, 8)}</p>
+                      <p className="text-xs text-alabaster/60 font-medium">Exhibit ID: {item.id.substring(0, 8)}</p>
 
                       <div className="mt-3 flex-grow">
                         {metadata?.processed ? (
-                          <div className="bg-ocean/5 p-3 rounded-lg border border-ocean/10">
-                            <p className="text-[10px] uppercase font-bold text-ocean/40 mb-1">Forensic Intelligence</p>
-                            <p className="text-[11px] text-ocean/80 line-clamp-2 leading-relaxed italic">
+                          <div className="bg-pacific/5 p-3 rounded-lg border border-pacific/10">
+                            <p className="text-[10px] uppercase font-bold text-pacific/40 mb-1">Forensic Intelligence</p>
+                            <p className="text-[11px] text-alabaster/80 line-clamp-2 leading-relaxed italic">
                               &quot;{metadata?.forensic?.summary || 'No summary available.'}&quot;
                             </p>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 text-[10px] font-bold text-beige py-2 px-1" role="status">
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-powder py-2 px-1" role="status">
                             <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
-                            <span className="uppercase tracking-widest">Awaiting Semantic Extraction...</span>
+                            <span className="uppercase tracking-widest text-[#a9bcd0]">Awaiting Semantic Extraction...</span>
                           </div>
                         )}
                       </div>
 
-                      <footer className="mt-4 pt-4 border-t border-beige/40 flex items-center justify-between">
-                        <span className="text-[10px] text-ocean/40 font-bold uppercase">
+                      <footer className="mt-4 pt-4 border-t border-charcoal/40 flex items-center justify-between">
+                        <span className="text-[10px] text-alabaster/40 font-bold uppercase">
                           {metadata?.processed ? 'Intelligence Ready' : 'Raw Exhibit'}
                         </span>
                         <button 
                           onClick={() => handleProcess(item.id)}
                           disabled={processingIds.has(item.id)}
-                          className="text-[10px] font-bold text-ocean hover:underline uppercase tracking-tighter flex items-center gap-1 disabled:no-underline disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ocean/40 rounded px-1"
+                          className="text-[10px] font-bold text-pacific hover:underline uppercase tracking-tighter flex items-center gap-1 disabled:no-underline disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-pacific/40 rounded px-1"
                           aria-label={`${metadata?.processed ? 'Reprocess' : 'Process'} ${metadata?.originalName || 'evidence'}`}
                         >
                           {processingIds.has(item.id) && <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />}
@@ -382,12 +382,12 @@ export default function EvidenceVault() {
       
       {evidence.length === 0 && (
         <div 
-          className="text-center py-20 border border-beige/40 rounded-xl bg-beige/10"
+          className="text-center py-20 border border-charcoal/40 rounded-xl bg-charcoal/5"
           role="status"
           aria-live="polite"
         >
-          <Archive className="w-12 h-12 text-ocean/20 mx-auto mb-4" aria-hidden="true" />
-          <p className="text-ocean/40 font-medium">No active exhibits in current corpus</p>
+          <Archive className="w-12 h-12 text-pacific/20 mx-auto mb-4" aria-hidden="true" />
+          <p className="text-alabaster/40 font-medium">No active exhibits in current corpus</p>
         </div>
       )}
     </main>

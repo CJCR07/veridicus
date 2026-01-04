@@ -45,15 +45,15 @@ export default function Sidebar() {
 
   return (
     <aside 
-      className="w-64 h-screen border-r border-slate-800 bg-slate-900/50 backdrop-blur-xl sticky top-0 px-4 py-8 flex flex-col"
+      className="w-64 h-screen border-r border-charcoal bg-charcoal/30 backdrop-blur-xl sticky top-0 px-4 py-8 flex flex-col"
       role="complementary"
       aria-label="Main navigation"
     >
       <header className="mb-12 px-2">
-        <h1 className="text-2xl font-serif font-bold text-slate-100 tracking-tight italic">
+        <h1 className="text-2xl font-serif font-bold text-alabaster tracking-tight italic">
           Veridicus
         </h1>
-        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mt-1">
+        <p className="text-[10px] uppercase tracking-widest text-pacific font-semibold mt-1">
           Forensic Reasoning Engine
         </p>
       </header>
@@ -68,14 +68,14 @@ export default function Sidebar() {
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all group focus:outline-none ${
                     isActive 
-                      ? 'text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 shadow-lg shadow-indigo-500/5' 
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                      ? 'text-alabaster bg-pacific/20 border border-pacific/30 shadow-lg shadow-pacific/5' 
+                      : 'text-powder/60 hover:text-alabaster hover:bg-charcoal/50'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
                 >
                   <item.icon 
                     className={`w-4 h-4 transition-colors ${
-                      isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'
+                      isActive ? 'text-pacific' : 'text-powder/40 group-hover:text-pacific'
                     }`} 
                     aria-hidden="true" 
                   />
@@ -87,19 +87,19 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      <footer className="mt-auto space-y-4 pt-6 border-t border-slate-800 px-2">
+      <footer className="mt-auto space-y-4 pt-6 border-t border-charcoal px-2">
         <div className="flex items-center gap-3" role="group" aria-label="User information">
           <div 
-            className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs uppercase"
+            className="w-8 h-8 rounded-lg bg-pacific/10 border border-pacific/20 flex items-center justify-center text-pacific font-bold text-xs uppercase"
             aria-hidden="true"
           >
             {user?.email ? user.email[0] : <UserIcon className="w-4 h-4" />}
           </div>
           <div className="overflow-hidden">
-            <p className="text-xs font-bold text-slate-200 truncate">
+            <p className="text-xs font-bold text-alabaster truncate">
               {user?.email ? user.email.split('@')[0] : 'Guest'}
             </p>
-            <p className="text-[10px] text-slate-500 truncate" aria-label="Email address">
+            <p className="text-[10px] text-powder/40 truncate" aria-label="Email address">
               {user?.email || 'Unauthorized'}
             </p>
           </div>
@@ -107,9 +107,9 @@ export default function Sidebar() {
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-all group"
+          className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold text-powder/40 hover:text-red-400 hover:bg-red-950/20 rounded-lg transition-all group"
         >
-          <LogOut className="w-4 h-4 text-slate-600 group-hover:text-red-500 transition-colors" />
+          <LogOut className="w-4 h-4 text-powder/30 group-hover:text-red-500 transition-colors" />
           <span>Terminate Session</span>
         </button>
       </footer>
